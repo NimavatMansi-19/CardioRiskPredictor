@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Predictor</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background: #218838; }
+        .result { margin-top: 20px; font-weight: bold; text-align: center; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="text-align: center;">Cardio Disease Prediction</h2>
+    <form action="{{ url_for('predict') }}" method="post">
+        <label>Age (Years):</label>
+        <input type="number" name="age" required value="50">
+
+        <label>Gender (1=Female, 2=Male):</label>
+        <select name="gender">
+            <option value="1">Female</option>
+            <option value="2">Male</option>
+        </select>
+
+        <label>Height (cm):</label>
+        <input type="number" name="height" required value="165">
+
+        <label>Weight (kg):</label>
+        <input type="number" name="weight" required value="65">
+
+        <label>Systolic BP (ap_hi):</label>
+        <input type="number" name="ap_hi" required value="120">
+
+        <label>Diastolic BP (ap_lo):</label>
+        <input type="number" name="ap_lo" required value="80">
+
+        <label>Cholesterol (1=Normal, 2=High, 3=Very High):</label>
+        <select name="cholesterol">
+            <option value="1">Normal</option>
+            <option value="2">High</option>
+            <option value="3">Very High</option>
+        </select>
+
+        <label>Glucose (1=Normal, 2=High, 3=Very High):</label>
+        <select name="gluc">
+            <option value="1">Normal</option>
+            <option value="2">High</option>
+            <option value="3">Very High</option>
+        </select>
+
+        <label>Smoke (0=No, 1=Yes):</label>
+        <select name="smoke">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <label>Alcohol (0=No, 1=Yes):</label>
+        <select name="alco">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <label>Physical Activity (0=No, 1=Yes):</label>
+        <select name="active">
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    <div class="result">
+        {{ prediction_text }}
+    </div>
+</div>
+
+</body>
+</html>
