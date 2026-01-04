@@ -5,7 +5,57 @@ import pandas as pd
 import time
 import sqlite3
 import hashlib
+import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
+# --- REPLACEMENT FUNCTIONS FOR GOOGLE SHEETS ---
+
+def get_db_connection():
+    """Connect to Google Sheets using Streamlit Secrets"""
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    
+    # Load credentials from Streamlit Secrets
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    
+    # Open the Sheet
+    sheet = client.open("cardio_users").sheet1 
+    return sheet
+
+def add_userdata(username, password):
+    """Add user to Google Sheet"""
+    try:
+        sheet = get_db_connection()
+        # Check if user exists
+        existing_users = sheet.col_values(1) # Column 1 is usernames
+        if username in existing_users:
+            return False
+        
+        # Add new row
+        sheet.append_row([username, password])
+        return True
+    except Exception as e:
+        st.error(f"Database Error: {e}")
+        return False
+
+def login_user(username, password):
+    """Check user in Google Sheet"""
+    try:
+        sheet = get_db_connection()
+        records = sheet.get_all_records() # Returns a list of dicts
+        
+        for row in records:
+            if row['username'] == username and row['password'] == password:
+                return True
+        return False
+    except Exception as e:
+        return False
+
+# --- UPDATE YOUR AUTH SCREEN LOGIC ---
+# In your login/signup buttons, use these new functions instead of the sqlite ones.
+# Note: The Google Sheet holds the 'hashed' password if you are hashing it before sending.
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="MediPredict | Clinical Dashboard",
