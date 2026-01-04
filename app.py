@@ -48,20 +48,18 @@ def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
 def add_userdata(username, password):
-    """Register a new user to Google Sheet"""
     try:
         sheet = get_db_connection()
-        # Check if user exists (Column 1 is usernames)
-        existing_users = sheet.col_values(1) 
-        
+        existing_users = sheet.col_values(1)
         if username in existing_users:
-            return False # User already exists
+            return False
         
-        # Add new row
         sheet.append_row([username, password])
         return True
     except Exception as e:
-        st.error(f"Database Error: {e}")
+        # --- THIS IS THE CHANGE ---
+        st.error(f"🛑 DETAILED ERROR: {e}")  # This will show you exactly what is wrong on the screen
+        # --------------------------
         return False
 
 def login_user(username, password):
