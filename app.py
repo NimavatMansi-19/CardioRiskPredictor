@@ -24,21 +24,7 @@ def get_db_connection():
     sheet = client.open("cardio_users").sheet1 
     return sheet
 
-def add_userdata(username, password):
-    """Add user to Google Sheet"""
-    try:
-        sheet = get_db_connection()
-        # Check if user exists
-        existing_users = sheet.col_values(1) # Column 1 is usernames
-        if username in existing_users:
-            return False
-        
-        # Add new row
-        sheet.append_row([username, password])
-        return True
-    except Exception as e:
-        st.error(f"Database Error: {e}")
-        return False
+
 
 def login_user(username, password):
     """Check user in Google Sheet"""
@@ -98,18 +84,20 @@ def create_usertable():
     conn.close()
 
 def add_userdata(username, password):
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
+    """Add user to Google Sheet"""
     try:
-        # This line will fail if username already exists
-        c.execute('INSERT INTO userstable(username,password) VALUES (?,?)', (username, password))
-        conn.commit()
-        success = True
-    except sqlite3.IntegrityError:
-        success = False # <--- This handles the "User Already Exists" error
-    conn.close()
-    return success
-
+        sheet = get_db_connection()
+        # Check if user exists
+        existing_users = sheet.col_values(1) # Column 1 is usernames
+        if username in existing_users:
+            return False
+        
+        # Add new row
+        sheet.append_row([username, password])
+        return True
+    except Exception as e:
+        st.error(f"Database Error: {e}")
+        return False
 def login_user(username, password):
     """Verify login credentials"""
     conn = sqlite3.connect('users.db')
