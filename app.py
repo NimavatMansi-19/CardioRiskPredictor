@@ -3,45 +3,10 @@ import pickle
 import numpy as np
 import pandas as pd
 import time
-import sqlite3
 import hashlib
-import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- REPLACEMENT FUNCTIONS FOR GOOGLE SHEETS ---
-
-def get_db_connection():
-    """Connect to Google Sheets using Streamlit Secrets"""
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    
-    # Load credentials from Streamlit Secrets
-    creds_dict = st.secrets["gcp_service_account"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-    
-    # Open the Sheet
-    sheet = client.open("cardio_users").sheet1 
-    return sheet
-
-
-
-def login_user(username, password):
-    """Check user in Google Sheet"""
-    try:
-        sheet = get_db_connection()
-        records = sheet.get_all_records() # Returns a list of dicts
-        
-        for row in records:
-            if row['username'] == username and row['password'] == password:
-                return True
-        return False
-    except Exception as e:
-        return False
-
-# --- UPDATE YOUR AUTH SCREEN LOGIC ---
-# In your login/signup buttons, use these new functions instead of the sqlite ones.
-# Note: The Google Sheet holds the 'hashed' password if you are hashing it before sending.
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="MediPredict | Clinical Dashboard",
@@ -58,39 +23,39 @@ st.markdown("""
     .css-1r6slb0, .css-12oz5g7 { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     .stButton>button { background-color: #007bff; color: white; border-radius: 8px; height: 50px; font-size: 18px; border: none; }
     .stButton>button:hover { background-color: #0056b3; }
-    /* Success Message Style */
     .stSuccess { background-color: #d4edda; color: #155724; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. DATABASE MANAGEMENT FUNCTIONS ---
+# --- 3. GOOGLE SHEETS DATABASE FUNCTIONS ---
+
+def get_db_connection():
+    """Connect to Google Sheets using Streamlit Secrets"""
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    
+    # Load credentials from Streamlit Secrets
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+    
+    # Open the Sheet
+    # Make sure your Google Sheet is named exactly "cardio_users_db"
+    sheet = client.open("cardio_users_db").sheet1 
+    return sheet
 
 def make_hashes(password):
-    """Encrypt password before saving to DB"""
+    """Encrypt password"""
     return hashlib.sha256(str.encode(password)).hexdigest()
 
-def check_hashes(password, hashed_text):
-    """Check if entered password matches the saved hash"""
-    if make_hashes(password) == hashed_text:
-        return hashed_text
-    return False
-
-def create_usertable():
-    """Create the table if it doesn't exist"""
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS userstable(username TEXT UNIQUE, password TEXT)')
-    conn.commit()
-    conn.close()
-
 def add_userdata(username, password):
-    """Add user to Google Sheet"""
+    """Register a new user to Google Sheet"""
     try:
         sheet = get_db_connection()
-        # Check if user exists
-        existing_users = sheet.col_values(1) # Column 1 is usernames
+        # Check if user exists (Column 1 is usernames)
+        existing_users = sheet.col_values(1) 
+        
         if username in existing_users:
-            return False
+            return False # User already exists
         
         # Add new row
         sheet.append_row([username, password])
@@ -98,19 +63,23 @@ def add_userdata(username, password):
     except Exception as e:
         st.error(f"Database Error: {e}")
         return False
+
 def login_user(username, password):
-    """Verify login credentials"""
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('SELECT * FROM userstable WHERE username =? AND password = ?', (username, password))
-    data = c.fetchall()
-    conn.close()
-    return data
+    """Verify login against Google Sheet"""
+    try:
+        sheet = get_db_connection()
+        records = sheet.get_all_records() # Returns list of dicts
+        
+        for row in records:
+            if row['username'] == username and row['password'] == password:
+                return True
+        return False
+    except Exception as e:
+        st.error(f"Login Error: {e}")
+        return False
 
-# Initialize DB on first run
-create_usertable()
+# --- 4. AUTHENTICATION SCREENS ---
 
-# --- 4. AUTHENTICATION LOGIC (LOGIN / SIGNUP) ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
@@ -119,24 +88,21 @@ if 'username' not in st.session_state:
 def auth_screen():
     st.markdown("<br>", unsafe_allow_html=True)
     st.title("Welcome to MediPredict")
-    st.markdown("Please Login or Register to access the Clinical Dashboard.")
+    st.markdown("Secure Cloud Login System")
 
-    # Create Tabs for Login and Sign Up
-    tab1, tab2 = st.tabs(["🔒 Login", "📝 Sign Up (Register)"])
+    tab1, tab2 = st.tabs(["🔒 Login", "📝 Sign Up"])
 
     # --- LOGIN TAB ---
     with tab1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.subheader("Login Section")
+            st.subheader("Sign In")
             username = st.text_input("Username", key="login_user")
             password = st.text_input("Password", type="password", key="login_pass")
             
             if st.button("Login"):
                 hashed_pswd = make_hashes(password)
-                result = login_user(username, hashed_pswd)
-                
-                if result:
+                if login_user(username, hashed_pswd):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = username
                     st.success(f"Welcome back, {username}!")
@@ -146,31 +112,25 @@ def auth_screen():
                     st.error("Incorrect Username or Password")
 
     # --- SIGN UP TAB ---
-   # --- SIGN UP TAB ---
     with tab2:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.subheader("Create New Account")
+            st.subheader("Create Account")
             new_user = st.text_input("New Username", key="new_user")
             new_password = st.text_input("New Password", type="password", key="new_pass")
             
             if st.button("Register"):
                 if new_user and new_password:
                     hashed_new_password = make_hashes(new_password)
-                    
-                    # Try to add the user
-                    is_created = add_userdata(new_user, hashed_new_password)
-                    
-                    if is_created:
-                        st.success("✅ Account created successfully!")
-                        st.info("Please navigate to the Login tab to sign in.")
+                    if add_userdata(new_user, hashed_new_password):
+                        st.success("✅ Account created! Please Login.")
+                        st.balloons()
                     else:
-                        # This message appears if the user is already in the DB
-                        st.error("⚠️ Error: User already exists!")
-                        st.warning(f"The username '{new_user}' is already registered. Please choose a different ID or Login.")
+                        st.warning(f"Username '{new_user}' already taken.")
                 else:
-                    st.error("Please enter both a username and password.")
-# --- 5. MAIN APPLICATION ---
+                    st.error("Fields cannot be empty")
+
+# --- 5. MAIN APP LOGIC ---
 
 if not st.session_state['logged_in']:
     auth_screen()
@@ -183,14 +143,20 @@ else:
         st.error("System Error: Model file missing.")
         st.stop()
 
-    # --- SIDEBAR NAVIGATION ---
-    st.sidebar.title(f"👤 Dr. {st.session_state['username']}")
-    st.sidebar.caption("Authorized Personnel")
+    # --- SIDEBAR ---
+    st.sidebar.title(f"👤 {st.session_state['username']}")
+    st.sidebar.caption("Status: Online")
+    
+    # Navigation
+    menu_options = ["Clinical Dashboard", "Model Insights"]
+    
+    # Admin Panel (Only for specific user)
+    if st.session_state['username'] == 'admin':
+        menu_options.append("Admin Database")
+        
+    page = st.sidebar.radio("Navigation", menu_options)
+    
     st.sidebar.divider()
-    
-    page = st.sidebar.radio("Navigation", ["Clinical Dashboard", "Model Insights"], index=0)
-    
-    st.sidebar.markdown("---")
     if st.sidebar.button("Logout"):
         st.session_state['logged_in'] = False
         st.rerun()
@@ -243,7 +209,7 @@ else:
                 with st.spinner("Analyzing..."):
                     time.sleep(0.5)
                 
-                # Conversion
+                # Conversion logic
                 gender = 1 if gender_txt == "Female" else 2
                 cholesterol = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}[chol_txt]
                 gluc = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}[gluc_txt]
@@ -270,20 +236,30 @@ else:
     # PAGE 2: MODEL INSIGHTS
     # =========================================
     elif page == "Model Insights":
-        st.title("🧠 Model Transparency Report")
-        
+        st.title("🧠 Model Transparency")
         col1, col2, col3 = st.columns(3)
         col1.metric("Algorithm", "Decision Tree")
-        col2.metric("Training Data", "70,000 Pts")
-        col3.metric("Depth", "10 Levels")
+        col2.metric("Backend", "Google Cloud")
+        col3.metric("Security", "SHA-256 Hash")
         st.divider()
-
-        st.subheader("Feature Importance")
         if hasattr(model, 'feature_importances_'):
             importance = model.feature_importances_
             feature_names = ['Age', 'Gender', 'Height', 'Weight', 'Systolic BP', 'Diastolic BP', 'Cholesterol', 'Glucose', 'Smoking', 'Alcohol', 'Activity']
-            df_imp = pd.DataFrame({'Feature': feature_names, 'Importance': importance})
-            df_imp = df_imp.sort_values(by='Importance', ascending=True)
+            df_imp = pd.DataFrame({'Feature': feature_names, 'Importance': importance}).sort_values(by='Importance', ascending=True)
             st.bar_chart(df_imp.set_index('Feature'))
-        else:
-            st.warning("Feature importance not available.")
+
+    # =========================================
+    # PAGE 3: ADMIN DATABASE (View Google Sheet Data)
+    # =========================================
+    elif page == "Admin Database":
+        st.title("☁️ Live Google Sheet Data")
+        st.warning("Authorized Access Only")
+        try:
+            sheet = get_db_connection()
+            records = sheet.get_all_records()
+            if records:
+                st.dataframe(pd.DataFrame(records), use_container_width=True)
+            else:
+                st.info("Database is currently empty.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
