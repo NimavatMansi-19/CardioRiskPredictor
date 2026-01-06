@@ -76,10 +76,19 @@ st.markdown("""
 
 def get_database():
     try:
-        gc = gspread.service_account(filename='credentials.json')
-        # YOUR URL
+        # Check if running on Streamlit Cloud (uses st.secrets)
+        if "gcp_service_account" in st.secrets:
+            # Create a dictionary from the secrets
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            # Authenticate using the dictionary
+            gc = gspread.service_account_from_dict(creds_dict)
+        else:
+            # Fallback to local file for when you run on your laptop
+            gc = gspread.service_account(filename='credentials.json')
+
         sheet_url = "https://docs.google.com/spreadsheets/d/1sKUkCu_ka1YyGSqdvYFzImfCDXacIuwFa4vA3rT8MjA/edit"
         return gc.open_by_url(sheet_url).sheet1
+            
     except Exception as e:
         st.error(f"❌ Database Connection Failed: {e}")
         st.stop()
