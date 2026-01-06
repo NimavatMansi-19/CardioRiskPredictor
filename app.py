@@ -426,7 +426,7 @@ def about_project():
         with col2:
             st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=150)
             st.markdown("#### 👨‍💻 Developer")
-            st.markdown("**Your Name**")
+            st.markdown("Nimavat Mansi")
             st.markdown("[GitHub Profile](https://github.com)")
             st.markdown("[LinkedIn Profile](https://linkedin.com)")
 
