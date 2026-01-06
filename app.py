@@ -1,263 +1,273 @@
 import streamlit as st
 import pickle
 import numpy as np
-import pandas as pd
-import time
-import hashlib
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import smtplib
+from email.mime.text import MIMEText
+import random
+import string
+import time
+import bcrypt  # For secure password hashing
 
-# --- 1. CONFIGURATION ---
+# --- 1. CONFIGURATION & SETUP ---
 st.set_page_config(
-    page_title="MediPredict | Clinical Dashboard",
-    page_icon="⚕️",
+    page_title="CardioRisk Pro",
+    page_icon="🫀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS STYLING ---
-st.markdown("""
-    <style>
-    .stApp { background-color: #f8f9fa; }
-    h1, h2, h3 { font-family: 'Segoe UI', sans-serif; color: #2c3e50; }
-    .css-1r6slb0, .css-12oz5g7 { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .stButton>button { background-color: #007bff; color: white; border-radius: 8px; height: 50px; font-size: 18px; border: none; }
-    .stButton>button:hover { background-color: #0056b3; }
-    .stSuccess { background-color: #d4edda; color: #155724; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- 2. GOOGLE SHEETS & EMAIL SETUP ---
 
-# --- 3. GOOGLE SHEETS DATABASE FUNCTIONS ---
-
-def get_db_connection():
-    """Connect to Google Sheets using Streamlit Secrets"""
+# Function to connect to Google Sheets
+def get_database():
+    # Define the scope
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
-    # Load credentials from Streamlit Secrets
-    creds_dict = st.secrets["gcp_service_account"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-    
-    # Open the Sheet
-    # Make sure your Google Sheet is named exactly "cardio_users_db"
-    sheet = client.open("cardio_users_db").sheet1 
-    return sheet
-
-def make_hashes(password):
-    """Encrypt password"""
-    return hashlib.sha256(str.encode(password)).hexdigest()
-
-def add_userdata(username, password):
+    # Authenticate (Ensure credentials.json is in your folder)
     try:
-        sheet = get_db_connection()
-        existing_users = sheet.col_values(1)
-        if username in existing_users:
-            return False
-        
-        sheet.append_row([username, password])
+        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+        client = gspread.authorize(creds)
+        # Open the sheet - MAKE SURE you create a sheet named 'CardioUsers'
+        sheet = client.open("CardioUsers").sheet1
+        return sheet
+    except Exception as e:
+        st.error(f"❌ Database Connection Error: {e}")
+        st.stop()
+
+# Function to send OTP via Email
+def send_otp_email(receiver_email, otp):
+    # --- CONFIGURE THIS ---
+    sender_email = "your_email@gmail.com" 
+    sender_password = "your_app_password" # Use App Password, not login password
+    # ----------------------
+    
+    msg = MIMEText(f"Your Password Reset OTP is: {otp}")
+    msg['Subject'] = 'CardioRisk Pro - Password Reset'
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    try:
+        # Connect to Gmail SMTP server
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
         return True
     except Exception as e:
-        # --- THIS IS THE CHANGE ---
-        st.error(f"🛑 DETAILED ERROR: {e}")  # This will show you exactly what is wrong on the screen
-        # --------------------------
+        st.error(f"Failed to send email: {e}")
         return False
 
-def login_user(username, password):
-    """Verify login against Google Sheet"""
-    try:
-        sheet = get_db_connection()
-        records = sheet.get_all_records() # Returns list of dicts
-        
-        for row in records:
-            if row['username'] == username and row['password'] == password:
-                return True
-        return False
-    except Exception as e:
-        st.error(f"Login Error: {e}")
-        return False
+# Helper: Generate Random OTP
+def generate_otp():
+    return ''.join(random.choices(string.digits, k=6))
 
-# --- 4. AUTHENTICATION SCREENS ---
+# --- 3. SESSION STATE MANAGEMENT ---
+if 'page' not in st.session_state:
+    st.session_state['page'] = 'login' # Options: login, forgot_pass, dashboard
+if 'otp' not in st.session_state:
+    st.session_state['otp'] = None
+if 'reset_email' not in st.session_state:
+    st.session_state['reset_email'] = None
 
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-if 'username' not in st.session_state:
-    st.session_state['username'] = ''
+# --- 4. AUTHENTICATION UI PAGES ---
 
-def auth_screen():
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.title("Welcome to MediPredict")
-    st.markdown("Secure Cloud Login System")
-
-    tab1, tab2 = st.tabs(["🔒 Login", "📝 Sign Up"])
-
-    # --- LOGIN TAB ---
-    with tab1:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.subheader("Sign In")
-            username = st.text_input("Username", key="login_user")
-            password = st.text_input("Password", type="password", key="login_pass")
+def login_page():
+    st.markdown("<h1 style='text-align: center;'>🫀 CardioRisk Pro Login</h1>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        with st.form("Login"):
+            email = st.text_input("Email")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
             
-            if st.button("Login"):
-                hashed_pswd = make_hashes(password)
-                if login_user(username, hashed_pswd):
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = username
-                    st.success(f"Welcome back, {username}!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("Incorrect Username or Password")
-
-    # --- SIGN UP TAB ---
-    with tab2:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.subheader("Create Account")
-            new_user = st.text_input("New Username", key="new_user")
-            new_password = st.text_input("New Password", type="password", key="new_pass")
-            
-            if st.button("Register"):
-                if new_user and new_password:
-                    hashed_new_password = make_hashes(new_password)
-                    if add_userdata(new_user, hashed_new_password):
-                        st.success("✅ Account created! Please Login.")
-                        st.balloons()
+            if submitted:
+                sheet = get_database()
+                try:
+                    # Find user by email (Assuming Email is in Column A, Password in Column B)
+                    cell = sheet.find(email)
+                    stored_hash = sheet.cell(cell.row, 2).value # Get password from Col B
+                    
+                    # Verify Password
+                    if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+                        st.session_state['page'] = 'dashboard'
+                        st.session_state['user'] = email
+                        st.rerun()
                     else:
-                        st.warning(f"Username '{new_user}' already taken.")
+                        st.error("Incorrect Password")
+                except gspread.exceptions.CellNotFound:
+                    st.error("User not found.")
+                except Exception as e:
+                    st.error(f"Login Error: {e}")
+
+        if st.button("Forgot Password?"):
+            st.session_state['page'] = 'forgot_pass'
+            st.rerun()
+
+def forgot_password_page():
+    st.markdown("## 🔐 Reset Password")
+    
+    # Step 1: Request OTP
+    if st.session_state['otp'] is None:
+        email = st.text_input("Enter your registered email")
+        if st.button("Send OTP"):
+            sheet = get_database()
+            try:
+                # Check if email exists
+                cell = sheet.find(email)
+                
+                # Generate and Send OTP
+                otp = generate_otp()
+                st.session_state['otp'] = otp
+                st.session_state['reset_email'] = email
+                
+                # --- EMAIL SENDING ---
+                # Uncomment the line below to actually send email
+                # send_success = send_otp_email(email, otp) 
+                
+                # FOR DEMO ONLY: Print OTP to screen so you can test without SMTP setup
+                st.info(f"DEMO MODE: Your OTP is {otp}") 
+                send_success = True 
+                
+                if send_success:
+                    st.success("OTP sent to your email!")
+            except gspread.exceptions.CellNotFound:
+                st.error("Email not found in our database.")
+    
+    # Step 2: Verify OTP and Change Password
+    else:
+        st.info(f"OTP sent to {st.session_state['reset_email']}")
+        
+        with st.form("Reset"):
+            user_otp = st.text_input("Enter 6-digit OTP")
+            new_pass = st.text_input("New Password", type="password")
+            confirm_pass = st.text_input("Confirm New Password", type="password")
+            submit_reset = st.form_submit_button("Update Password")
+            
+            if submit_reset:
+                if user_otp == st.session_state['otp']:
+                    if new_pass == confirm_pass:
+                        # Hash new password
+                        hashed_pw = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                        
+                        # Update Google Sheet
+                        sheet = get_database()
+                        cell = sheet.find(st.session_state['reset_email'])
+                        sheet.update_cell(cell.row, 2, hashed_pw) # Updating Col 2 (Password)
+                        
+                        st.success("Password Updated Successfully! Redirecting to login...")
+                        time.sleep(2)
+                        
+                        # Reset State
+                        st.session_state['otp'] = None
+                        st.session_state['reset_email'] = None
+                        st.session_state['page'] = 'login'
+                        st.rerun()
+                    else:
+                        st.error("Passwords do not match.")
                 else:
-                    st.error("Fields cannot be empty")
+                    st.error("Invalid OTP.")
 
-# --- 5. MAIN APP LOGIC ---
+        if st.button("Cancel"):
+            st.session_state['otp'] = None
+            st.session_state['page'] = 'login'
+            st.rerun()
 
-if not st.session_state['logged_in']:
-    auth_screen()
-else:
-    # --- Load Model ---
+# --- 5. MAIN DASHBOARD (Your Original App) ---
+
+def dashboard_page():
+    # Logout Button
+    with st.sidebar:
+        if st.button("🚪 Logout"):
+            st.session_state['page'] = 'login'
+            st.rerun()
+
+    # Custom CSS
+    st.markdown("""
+        <style>
+        .main { background-color: #f5f5f5; }
+        .stButton>button { width: 100%; background-color: #ff4b4b; color: white; height: 3em; font-weight: bold; }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # Load Model
     try:
         with open('model.pkl', 'rb') as file:
             model = pickle.load(file)
     except FileNotFoundError:
-        st.error("System Error: Model file missing.")
+        st.error("🚨 System Error: 'model.pkl' not found.")
         st.stop()
 
-    # --- SIDEBAR ---
-    st.sidebar.title(f"👤 {st.session_state['username']}")
-    st.sidebar.caption("Status: Online")
-    
-    # Navigation
-    menu_options = ["Clinical Dashboard", "Model Insights"]
-    
-    # Admin Panel (Only for specific user)
-    if st.session_state['username'] == 'admin':
-        menu_options.append("Admin Database")
-        
-    page = st.sidebar.radio("Navigation", menu_options)
-    
-    st.sidebar.divider()
-    if st.sidebar.button("Logout"):
-        st.session_state['logged_in'] = False
-        st.rerun()
+    # Sidebar
+    st.sidebar.header("📋 Patient Data Entry")
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Demographics")
+    age = st.sidebar.number_input("Age (Years)", 30, 100, 50)
+    gender_txt = st.sidebar.radio("Gender", ["Female", "Male"], horizontal=True)
+    height = st.sidebar.number_input("Height (cm)", 100, 250, 165)
+    weight = st.sidebar.number_input("Weight (kg)", 30, 200, 65)
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Medical Vitals")
+    ap_hi = st.sidebar.number_input("Systolic BP (Top #)", 90, 200, 120)
+    ap_lo = st.sidebar.number_input("Diastolic BP (Bottom #)", 60, 150, 80)
+    chol_txt = st.sidebar.selectbox("Cholesterol", ["Normal", "Above Normal", "Well Above Normal"])
+    gluc_txt = st.sidebar.selectbox("Glucose", ["Normal", "Above Normal", "Well Above Normal"])
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Lifestyle Habits")
+    smoke_txt = st.sidebar.selectbox("Smoker?", ["No", "Yes"])
+    alco_txt = st.sidebar.selectbox("Alcohol Intake?", ["No", "Yes"])
+    active_txt = st.sidebar.selectbox("Physically Active?", ["No", "Yes"])
 
-    # =========================================
-    # PAGE 1: CLINICAL DASHBOARD
-    # =========================================
-    if page == "Clinical Dashboard":
-        st.title("⚕️ Patient Assessment")
-        
-        left_column, right_column = st.columns([2, 1])
+    # Main Page
+    st.title("🫀 CardioRisk Pro")
+    st.markdown("### AI-Powered Cardiovascular Disease Assessment")
 
-        with left_column:
-            st.subheader("Patient Intake Form")
-            tab_p, tab_v, tab_h = st.tabs(["Profile", "Vitals", "History"])
-            
-            with tab_p:
-                c1, c2 = st.columns(2)
-                age = c1.number_input("Age", 18, 100, 50)
-                gender_txt = c2.selectbox("Gender", ["Female", "Male"])
-                c3, c4 = st.columns(2)
-                height = c3.number_input("Height (cm)", 100, 250, 165)
-                weight = c4.number_input("Weight (kg)", 30, 200, 70)
-                st.info(f"BMI: {weight / ((height/100)**2):.2f}")
+    with st.expander("👀 Review Patient Summary", expanded=False):
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Age", f"{age} yrs")
+        c2.metric("BMI", f"{weight/((height/100)**2):.1f}")
+        c3.metric("BP", f"{ap_hi}/{ap_lo}")
+        c4.metric("Active?", active_txt)
 
-            with tab_v:
-                c1, c2 = st.columns(2)
-                ap_hi = c1.number_input("Systolic BP", 80, 220, 120)
-                ap_lo = c2.number_input("Diastolic BP", 50, 150, 80)
-                c3, c4 = st.columns(2)
-                chol_txt = c3.selectbox("Cholesterol", ["Normal", "Above Normal", "Well Above Normal"])
-                gluc_txt = c4.selectbox("Glucose", ["Normal", "Above Normal", "Well Above Normal"])
+    # Logic
+    gender = 1 if gender_txt == "Female" else 2
+    chol_map = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}
+    cholesterol = chol_map[chol_txt]
+    gluc_map = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}
+    gluc = gluc_map[gluc_txt]
+    smoke = 1 if smoke_txt == "Yes" else 0
+    alco = 1 if alco_txt == "Yes" else 0
+    active = 1 if active_txt == "Yes" else 0
 
-            with tab_h:
-                c1, c2, c3 = st.columns(3)
-                smoke_txt = c1.radio("Smoker?", ["No", "Yes"])
-                alco_txt = c2.radio("Alcohol?", ["No", "Yes"])
-                active_txt = c3.radio("Active?", ["No", "Yes"])
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            run_prediction = st.button("Run Analysis", type="primary")
+    if st.sidebar.button("RUN DIAGNOSIS"):
+        with st.spinner("Analyzing clinical data..."):
+            features = np.array([[age, gender, height, weight, ap_hi, ap_lo, cholesterol, gluc, smoke, alco, active]])
+            prediction = model.predict(features)[0]
+            probability = model.predict_proba(features)[0][1]
+            prob_percent = probability * 100
 
-        with right_column:
-            st.subheader("Results")
-            res_container = st.container()
-            with res_container:
-                st.info("Awaiting Input...")
-
-            if run_prediction:
-                with st.spinner("Analyzing..."):
-                    time.sleep(0.5)
-                
-                # Conversion logic
-                gender = 1 if gender_txt == "Female" else 2
-                cholesterol = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}[chol_txt]
-                gluc = {"Normal": 1, "Above Normal": 2, "Well Above Normal": 3}[gluc_txt]
-                smoke = 1 if smoke_txt == "Yes" else 0
-                alco = 1 if alco_txt == "Yes" else 0
-                active = 1 if active_txt == "Yes" else 0
-
-                features = np.array([[age, gender, height, weight, ap_hi, ap_lo, cholesterol, gluc, smoke, alco, active]])
-                prediction = model.predict(features)[0]
-                probability = model.predict_proba(features)[0][1] * 100
-
-                res_container.empty()
-                with res_container:
-                    if prediction == 1:
-                        st.error("HIGH RISK DETECTED")
-                        st.metric("Risk", f"{probability:.1f}%", "High Alert", delta_color="inverse")
-                        st.progress(int(probability))
-                    else:
-                        st.success("LOW RISK / HEALTHY")
-                        st.metric("Risk", f"{probability:.1f}%", "- Safe")
-                        st.progress(int(probability))
-
-    # =========================================
-    # PAGE 2: MODEL INSIGHTS
-    # =========================================
-    elif page == "Model Insights":
-        st.title("🧠 Model Transparency")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Algorithm", "Decision Tree")
-        col2.metric("Backend", "Google Cloud")
-        col3.metric("Security", "SHA-256 Hash")
         st.divider()
-        if hasattr(model, 'feature_importances_'):
-            importance = model.feature_importances_
-            feature_names = ['Age', 'Gender', 'Height', 'Weight', 'Systolic BP', 'Diastolic BP', 'Cholesterol', 'Glucose', 'Smoking', 'Alcohol', 'Activity']
-            df_imp = pd.DataFrame({'Feature': feature_names, 'Importance': importance}).sort_values(by='Importance', ascending=True)
-            st.bar_chart(df_imp.set_index('Feature'))
-
-    # =========================================
-    # PAGE 3: ADMIN DATABASE (View Google Sheet Data)
-    # =========================================
-    elif page == "Admin Database":
-        st.title("☁️ Live Google Sheet Data")
-        st.warning("Authorized Access Only")
-        try:
-            sheet = get_db_connection()
-            records = sheet.get_all_records()
-            if records:
-                st.dataframe(pd.DataFrame(records), use_container_width=True)
+        col_res1, col_res2 = st.columns([2, 1])
+        with col_res1:
+            if prediction == 1:
+                st.error("## ⚠️ High Risk Detected")
+                st.write("The model predicts a high likelihood of cardiovascular disease.")
+                st.write("**Recommendation:** Immediate clinical consultation advised.")
             else:
-                st.info("Database is currently empty.")
-        except Exception as e:
-            st.error(f"Error fetching data: {e}")
+                st.success("## ✅ Low Risk / Healthy")
+                st.write("The model predicts a low likelihood of cardiovascular disease.")
+        with col_res2:
+            st.metric(label="Risk Probability", value=f"{prob_percent:.1f}%")
+            st.progress(int(prob_percent))
+        st.warning("⚠️ Disclaimer: Educational purposes only.")
+
+# --- 6. APP CONTROLLER ---
+# This controls which page is currently shown
+
+if st.session_state['page'] == 'login':
+    login_page()
+elif st.session_state['page'] == 'forgot_pass':
+    forgot_password_page()
+elif st.session_state['page'] == 'dashboard':
+    dashboard_page()
