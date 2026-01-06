@@ -1,6 +1,7 @@
 streamlit
+gspread
+bcrypt
+plotly
+pandas
 numpy
 scikit-learn
-gspread          # (New) For connecting to Google Sheets
-oauth2client     # (New) For Google API Authentication
-bcrypt           # (New) For secure password hashing
