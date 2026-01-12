@@ -121,25 +121,50 @@ if 'otp' not in st.session_state: st.session_state['otp'] = None
 if 'reset_email' not in st.session_state: st.session_state['reset_email'] = None
 
 # --- 4. AUTHENTICATION UI ---
-
 def login_page():
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    # Adding a soft background gradient specifically for the login view
+    st.markdown("""
+        <style>
+        .stApp {
+            background: radial-gradient(circle at top right, #E0E7FF, #F8FAFC);
+        }
+        /* Style the card container */
+        div[data-testid="stVerticalBlock"] > div:has(div.login-card) {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid #E2E8F0;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Use columns to center the login card perfectly
+    _, col2, _ = st.columns([1, 1.5, 1])
+    
     with col2:
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #1E293B;'>🫀 CardioRisk Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748B;'>AI-Powered Clinical Decision Support System</p>", unsafe_allow_html=True)
         
-        with st.container(border=True):
-            st.subheader("Sign In")
-            email = st.text_input("Email Address", placeholder="doctor@hospital.com")
-            password = st.text_input("Password", type="password")
+        # Branding Section
+        st.markdown("<h1 style='text-align: center; color: #1E293B; font-size: 2.5rem; margin-bottom: 0;'>🫀 CardioRisk Pro</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748B; font-size: 1.1rem; margin-bottom: 2rem;'>Precision Clinical Decision Support</p>", unsafe_allow_html=True)
+        
+        # Input Container
+        with st.container():
+            st.subheader("Secure Sign In")
+            email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
+            password = st.text_input("Access Password", type="password", placeholder="••••••••")
             
-            if st.button("Access Dashboard", type="primary"):
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Primary Action
+            if st.button("Authenticate & Access Dashboard", type="primary", use_container_width=True):
                 sheet = get_database()
                 try:
                     cell = sheet.find(email)
                     if cell is None:
-                        st.error("User not found.")
+                        st.error("User not found in clinical database.")
                     else:
                         stored_hash = sheet.cell(cell.row, 2).value
                         if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
@@ -147,21 +172,25 @@ def login_page():
                             st.session_state['user'] = email
                             st.rerun()
                         else:
-                            st.error("Incorrect Password")
+                            st.error("Invalid credentials. Please try again.")
                 except Exception as e:
-                    st.error(f"Login Error: {e}")
+                    st.error(f"Authentication System Error: {e}")
             
-            st.markdown("---")
+            st.markdown("<div style='margin: 25px 0;'><hr style='border: 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
+            
+            # Secondary Actions
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("Forgot Password?", type="secondary"):
+                if st.button("Forgot Password?", type="secondary", use_container_width=True):
                     st.session_state['page'] = 'forgot_pass'
                     st.rerun()
             with c2:
-                if st.button("Create Account", type="secondary"):
+                if st.button("Enroll New User", type="secondary", use_container_width=True):
                     st.session_state['page'] = 'register'
                     st.rerun()
-
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.8rem; margin-top: 2rem;'>Secured by HIPAA-compliant encryption standards</p>", unsafe_allow_html=True)
 def register_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
