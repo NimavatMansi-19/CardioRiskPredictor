@@ -1,0 +1,61 @@
+# 🫀 CardioRisk Pro
+### AI-Powered Clinical Decision Support System
+
+**CardioRisk Pro** is a high-performance web application designed for healthcare professionals to assess patient cardiovascular health. Using a Random Forest Machine Learning model, the system analyzes demographic, clinical, and lifestyle data to predict the 10-year risk of cardiovascular disease (CVD).
+
+
+Link To live Project
+🔗 **https://cardioriskpredictor-ufzpuxvtwiky3v8ewtf3rc.streamlit.app/**
+
+---
+
+## 🚀 Key Functionalities
+
+### 1. Secure Authentication & User Management
+* **Role-Based Access:** Secure login system for authorized clinical personnel.
+* **Encrypted Security:** Utilizes `bcrypt` for industrial-grade password hashing.
+* **OTP Recovery:** Integrated One-Time Password (OTP) workflow for secure password resets.
+
+### 2. Smart Diagnostic Dashboard
+* **Patient Profiling:** Captures Age, Gender, Height, and Weight.
+* **Clinical Integration:** Real-time entry of Systolic/Diastolic blood pressure, Cholesterol levels, and Glucose levels.
+* **Behavioral Analytics:** Tracks lifestyle factors including smoking status, alcohol intake, and physical activity.
+
+### 3. Machine Learning Risk Analysis
+* **Predictive Engine:** Leverages a Random Forest Classifier trained on over 70,000 patient records.
+* **Visual Risk Gauge:** Interactive Plotly gauge chart providing immediate risk probability (0-100%).
+* **Risk Categorization:** Dynamic visual alerts (Low vs. High Risk) based on AI output.
+
+### 4. Automated Clinical Recommendations
+* **Contextual Tips:** If a High Risk is detected, the system provides:
+    * **Dietary Advice:** Specific DASH diet recommendations (sodium reduction, etc.).
+    * **Lifestyle Modifications:** Actionable exercise and cessation guidance.
+    * **Clinical Referrals:** Automated suggestions for cardiologist consultations.
+
+### 5. Data Science Insights
+* **Patient vs. Population:** Bar charts comparing patient vitals against healthy benchmarks.
+* **Performance Transparency:** Displays model metrics including Accuracy (73.4%), Precision, and Recall.
+
+---
+
+## 🛠️ Technical Stack
+
+| Component | Technology |
+| :--- | :--- |
+| **Frontend** | Streamlit |
+| **Data Visualization** | Plotly & Pandas |
+| **Machine Learning** | Scikit-Learn (Random Forest) |
+| **Database** | Google Sheets API (gspread) |
+| **Security** | Bcrypt Hashing & Session State Management |
+| **Styling** | Custom CSS (Inter/Plus Jakarta Sans Typography) |
+
+---
+
+## 📋 System Architecture
+
+1.  **Input:** Clinician enters non-invasive metrics into the Streamlit interface.
+2.  **Authentication:** User session is verified via Google Sheets NoSQL-style database.
+3.  **Processing:** Data is normalized and passed to the `model.pkl` inference engine.
+4.  **Output:** System renders risk probability, comparative charts, and mitigation tips.
+
+---
