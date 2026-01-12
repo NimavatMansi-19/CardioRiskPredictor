@@ -133,7 +133,7 @@ def login_page():
 
         .main .block-container {
             padding-top: 2rem;
-            max-width: 450px; /* Fixed width for consistent professional look */
+            max-width: 250px; /* Fixed width for consistent professional look */
             margin: auto;
         }
 
