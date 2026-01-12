@@ -1,8 +1,8 @@
+🫀 CardioRisk Pro
 AI-Powered Clinical Decision Support System
 CardioRisk Pro is a high-performance web application designed for healthcare professionals to assess patient cardiovascular health. Using a Random Forest Machine Learning model, the system analyzes demographic, clinical, and lifestyle data to predict the 10-year risk of cardiovascular disease (CVD).
 
-Live Project: Click here to view the app
-
+Live Project Link: https://cardioriskpredictor-ufzpuxvtwiky3v8ewtf3rc.streamlit.app/
 🚀 Key Functionalities
 1. Secure Authentication & User Management
 Role-Based Access: Secure login system for authorized clinical personnel.
