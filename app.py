@@ -121,111 +121,150 @@ if 'otp' not in st.session_state: st.session_state['otp'] = None
 if 'reset_email' not in st.session_state: st.session_state['reset_email'] = None
 
 # --- 4. AUTHENTICATION UI ---
+import streamlit as st
+
 def login_page():
+
+    st.set_page_config(
+        page_title="CardioRisk Pro",
+        page_icon="❤️",
+        layout="centered"
+    )
+
     st.markdown("""
-        <style>
-        /* Force app height and hide scroll */
-        .stApp {
-            background: radial-gradient(circle at top right, #E0E7FF, #F8FAFC);
-            height: 100vh;
-            overflow: hidden;
-        }
+    <style>
+    /* --------- App Background --------- */
+    .stApp {
+        background: linear-gradient(135deg, #E0F2FE, #F8FAFC);
+        height: 100vh;
+        overflow: hidden;
+    }
 
-        .main .block-container {
-            padding-top: 2rem;
-            max-width: 250px; /* Fixed width for consistent professional look */
-            margin: auto;
-        }
+    /* --------- Center Card --------- */
+    .login-card {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        border-radius: 22px;
+        padding: 32px 30px;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        max-width: 420px;
+        margin: auto;
+        margin-top: 70px;
+    }
 
-        /* FLEXBOX HEADER: Prevents vertical stacking */
-        .clinical-header-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap; /* Ensures text stays in one line */
-            gap: 12px;
-            margin-bottom: 5px;
-        }
+    /* --------- Header --------- */
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
 
-        .heart-icon { font-size: 2.2rem; }
-        .stethoscope-icon { font-size: 2rem; }
-        
-        .ekg-wave {
-            color: #EF4444;
-            font-size: 1.4rem;
-            font-weight: bold;
-            letter-spacing: -2px;
-            animation: pulse 1.5s infinite;
-        }
+    .app-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1E293B;
+        margin: 0;
+    }
 
-        .app-title {
-            color: #1E293B;
-            font-size: 2rem;
-            font-weight: 800;
-            margin: 0;
-            padding: 0;
-        }
+    .subtext {
+        text-align: center;
+        color: #64748B;
+        font-size: 0.85rem;
+        margin-bottom: 25px;
+    }
 
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
+    .ekg {
+        color: #EF4444;
+        font-weight: bold;
+        font-size: 1.2rem;
+        animation: pulse 1.4s infinite;
+    }
 
-        /* Professional Card styling */
-        [data-testid="stVerticalBlock"] > div:has(div.login-card) {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
+    @keyframes pulse {
+        0% {opacity: .4;}
+        50% {opacity: 1;}
+        100% {opacity: .4;}
+    }
 
-        div.stButton > button {
-            height: 2.8rem;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        </style>
+    /* --------- Inputs --------- */
+    input {
+        border-radius: 10px !important;
+    }
+
+    /* --------- Buttons --------- */
+    div.stButton > button {
+        height: 2.9rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    /* --------- Divider --------- */
+    .divider {
+        margin: 20px 0;
+        border-top: 1px solid #E2E8F0;
+    }
+
+    /* --------- Footer --------- */
+    .version {
+        text-align: center;
+        font-size: 0.7rem;
+        color: #94A3B8;
+        margin-top: 18px;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
-    # Wrap in login-card div for CSS targeting
+    # ---------- CARD START ----------
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    
-    # IMPROVED HEADER HTML
+
+    # Header
     st.markdown("""
-        <div class="clinical-header-container">
-            <span class="heart-icon">❤️</span>
-            <span class="ekg-wave">ﮩ٨ـﮩﮩ٨ـ</span>
+        <div class="header">
+            <span style="font-size:1.8rem;">❤️</span>
+            <span class="ekg">────</span>
             <h1 class="app-title">CardioRisk Pro</h1>
-            <span class="stethoscope-icon">🩺</span>
+            <span style="font-size:1.7rem;">🩺</span>
         </div>
-        <p style='text-align: center; color: #64748B; font-size: 0.85rem; margin-top: -10px; margin-bottom: 25px;'>
-            Precision Clinical Decision Support | 🎛️ BP Active
-        </p>
+        <div class="subtext">
+            Precision Clinical Decision Support &nbsp;|&nbsp; ⚡ BP Active
+        </div>
     """, unsafe_allow_html=True)
 
-    # FORM LOGIC
+    # Inputs
     email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
     password = st.text_input("Access Key", type="password", placeholder="••••••••")
-    
-    st.write("") # Spacer
-    
-    if st.button("Authenticate Dashboard", type="primary", icon="🔐", use_container_width=True):
-        # Your authentication logic here
-        pass
 
-    st.markdown('<div style="margin: 20px 0; border-top: 1px solid #E2E8F0;"></div>', unsafe_allow_html=True)
-    
+    st.write("")
+
+    # Main Button
+    st.button(
+        "🔐 Authenticate Dashboard",
+        type="primary",
+        use_container_width=True
+    )
+
+    # Divider
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+    # Secondary buttons
     c1, c2 = st.columns(2)
     with c1:
-        st.button("Forgot?", type="secondary", icon="❓", use_container_width=True)
+        st.button("❓ Forgot Auth", use_container_width=True)
     with c2:
-        st.button("Enroll", type="secondary", icon="📝", use_container_width=True)
+        st.button("📝 Enroll User", use_container_width=True)
 
-    st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.7rem; margin-top: 20px;'>System Version: 2.1.0-Clinical</p>", unsafe_allow_html=True)
+    # Footer
+    st.markdown(
+        '<div class="version">System Version: 2.1.0-Clinical</div>',
+        unsafe_allow_html=True
+    )
+
     st.markdown('</div>', unsafe_allow_html=True)
+    # ---------- CARD END ----------
+
 
 
 
