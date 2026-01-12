@@ -134,24 +134,24 @@ def login_page():
 
     st.markdown("""
     <style>
-    /* ===== BACKGROUND ===== */
+    /* ===== PAGE BACKGROUND ===== */
     .stApp {
         background: linear-gradient(135deg, #DFF1FF, #F8FAFC);
         height: 100vh;
         overflow: hidden;
     }
-    
 
-    /* ===== LOGIN CARD (CHANGE WIDTH HERE) ===== */
+    /* ===== CENTER CARD ===== */
     .login-card {
-        max-width: 360px;   /* 👈 CHANGE THIS VALUE */
         background: rgba(255,255,255,0.95);
         backdrop-filter: blur(14px);
         border-radius: 22px;
-        padding: 30px;
+        padding: 32px;
         border: 1px solid #E2E8F0;
         box-shadow: 0 25px 50px rgba(0,0,0,0.12);
-        margin: 80px auto;
+        max-width: 420px;
+        margin: auto;
+        margin-top: 80px;
     }
 
     /* ===== HEADER ===== */
@@ -214,24 +214,24 @@ def login_page():
 
     st.subheader("Secure Sign In")
 
-    # Inputs
+    # Inputs (UNCHANGED)
     email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
     password = st.text_input("Access Key", type="password")
 
     st.write("")
 
-    # ---- AUTH BUTTON (LOGIC SAME) ----
+    # ---- AUTH BUTTON (LOGIC UNCHANGED) ----
     if st.button("🔐 Authenticate Dashboard", type="primary", use_container_width=True):
-        sheet = get_database()  # your existing function
+        sheet = get_database()
         try:
             cell = sheet.find(email)
             if cell is None:
                 st.error("User not found.")
             else:
                 stored_hash = sheet.cell(cell.row, 2).value
-                if bcrypt.checkpw(password.encode(), stored_hash.encode()):
-                    st.session_state.page = "dashboard"
-                    st.session_state.user = email
+                if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+                    st.session_state['page'] = 'dashboard'
+                    st.session_state['user'] = email
                     st.rerun()
                 else:
                     st.error("Incorrect Password")
@@ -240,16 +240,16 @@ def login_page():
 
     st.markdown("<hr style='margin:18px 0;border-top:1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
-    # Secondary buttons
+    # Secondary buttons (UNCHANGED)
     c1, c2 = st.columns(2)
     with c1:
         if st.button("❓ Forgot Auth", use_container_width=True):
-            st.session_state.page = "forgot_pass"
+            st.session_state['page'] = 'forgot_pass'
             st.rerun()
 
     with c2:
         if st.button("📝 Enroll User", use_container_width=True):
-            st.session_state.page = "register"
+            st.session_state['page'] = 'register'
             st.rerun()
 
     st.markdown('<div class="version">System Version: 2.1.0-Clinical</div>', unsafe_allow_html=True)
