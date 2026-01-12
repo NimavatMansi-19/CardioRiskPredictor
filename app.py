@@ -142,7 +142,7 @@ def login_page():
         padding: 32px;
         border: 1px solid #E2E8F0;
         box-shadow: 0 25px 50px rgba(0,0,0,0.12);
-        max-width: 420px;
+        max-width: 340px;
         margin: auto;
         margin-top: 80px;
     }
