@@ -502,19 +502,43 @@ def dashboard_page():
                         st.session_state['last_pred'] = prediction
 
         # --- RESULTS SECTION ---
+        # --- RESULTS SECTION ---
         with col_result:
             if 'last_prob' in st.session_state:
                 st.markdown("### Assessment Result")
                 with st.container(border=True):
-                    st.plotly_chart(plot_gauge(st.session_state['last_prob']), use_container_width=True)
+                    prob = st.session_state['last_prob']
+                    st.plotly_chart(plot_gauge(prob), use_container_width=True)
                     
                     if st.session_state['last_pred'] == 1:
                         st.error("#### ⚠️ High Risk Detected")
-                        st.markdown(f"Probability: **{st.session_state['last_prob']:.1f}%**")
+                        st.markdown(f"Probability: **{prob:.1f}%**")
                         st.markdown("Patient shows significant signs of cardiovascular distress. **Refer to cardiologist.**")
+                        
+                        # --- NEW TIPS SECTION ---
+                        st.markdown("---")
+                        st.markdown("### 📋 Risk Reduction Tips")
+                        
+                        with st.expander("🍏 Dietary Recommendations", expanded=True):
+                            st.write("- **Reduce Sodium:** Limit salt intake to less than 2,300 mg per day.")
+                            st.write("- **Heart-Healthy Fats:** Switch to olive oil and increase Omega-3 via fish or flaxseeds.")
+                            st.write("- **Fiber:** Increase intake of whole grains, fruits, and vegetables.")
+
+                        with st.expander("🏃 Lifestyle Adjustments"):
+                            st.write("- **Regular Exercise:** Aim for at least 150 minutes of moderate-intensity aerobic activity weekly.")
+                            st.write("- **Smoking Cessation:** If applicable, quitting smoking is the single most effective way to lower risk.")
+                            st.write("- **Stress Management:** Practice yoga, meditation, or deep breathing exercises.")
+                        
+                        with st.expander("💊 Medical Monitoring"):
+                            st.write("- **Regular BP Checks:** Keep a daily log of blood pressure readings.")
+                            st.write("- **Medication Adherence:** Strictly follow any prescribed antihypertensive or statin regimens.")
+                        
+                        st.info("💡 *Note: These tips are for educational support and do not replace professional medical advice.*")
+                        # -------------------------
+                        
                     else:
                         st.success("#### ✅ Low Risk Profile")
-                        st.markdown(f"Probability: **{st.session_state['last_prob']:.1f}%**")
+                        st.markdown(f"Probability: **{prob:.1f}%**")
                         st.markdown("Patient vitals are within stable ranges. Maintain healthy lifestyle.")
                     
                     st.markdown("---")
@@ -522,8 +546,6 @@ def dashboard_page():
             else:
                 with st.container(border=True):
                     st.info("👈 Fill out the form and click 'Analyze' to see the risk prediction here.")
-                    # Using a representative image for visual guidance; the user's focus is on the app functionality. 
-                    # A general medical or heart image is appropriate here.
                     st.image("https://cdn-icons-png.flaticon.com/512/2966/2966327.png", width=100)
 
     elif menu == "🧠 Insights":
