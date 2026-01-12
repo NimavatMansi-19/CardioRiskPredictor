@@ -122,49 +122,46 @@ if 'reset_email' not in st.session_state: st.session_state['reset_email'] = None
 
 # --- 4. AUTHENTICATION UI ---
 def login_page():
-    # Adding a soft background gradient specifically for the login view
+    # Subtle CSS to refine card borders and button heights
     st.markdown("""
         <style>
-        .stApp {
-            background: radial-gradient(circle at top right, #E0E7FF, #F8FAFC);
+        /* Modernize button feel without increasing width */
+        div.stButton > button {
+            height: 2.4rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
         }
-        /* Style the card container */
-        div[data-testid="stVerticalBlock"] > div:has(div.login-card) {
-            background-color: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border: 1px solid #E2E8F0;
+        /* Soften the input box borders */
+        .stTextInput > div > div > input {
+            border-radius: 6px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Use columns to center the login card perfectly
-    _, col2, _ = st.columns([1, 1.5, 1])
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     
     with col2:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown("<br><br>", unsafe_allow_html=True)
+        # Adding a clinical heartbeat icon to the header
+        st.markdown("<h1 style='text-align: center; color: #1E293B;'>🫀 CardioRisk Pro</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748B; font-size: 0.9rem;'>AI-Powered Clinical Decision Support</p>", unsafe_allow_html=True)
         
-        # Branding Section
-        st.markdown("<h1 style='text-align: center; color: #1E293B; font-size: 2.5rem; margin-bottom: 0;'>🫀 CardioRisk Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748B; font-size: 1.1rem; margin-bottom: 2rem;'>Precision Clinical Decision Support</p>", unsafe_allow_html=True)
-        
-        # Input Container
-        with st.container():
+        with st.container(border=True):
             st.subheader("Secure Sign In")
+            
+            # Icons added using the 'icon' parameter available in newer Streamlit versions
             email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
-            password = st.text_input("Access Password", type="password", placeholder="••••••••")
+            password = st.text_input("Access Key", type="password")
             
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.write("") # Small spacer
             
-            # Primary Action
-            if st.button("Authenticate & Access Dashboard", type="primary", use_container_width=True):
+            # Log in button with a key/lock icon
+            if st.button("Authenticate Dashboard", type="primary", icon="🔐", use_container_width=True):
                 sheet = get_database()
                 try:
                     cell = sheet.find(email)
                     if cell is None:
-                        st.error("User not found in clinical database.")
+                        st.error("User not found.")
                     else:
                         stored_hash = sheet.cell(cell.row, 2).value
                         if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
@@ -172,25 +169,27 @@ def login_page():
                             st.session_state['user'] = email
                             st.rerun()
                         else:
-                            st.error("Invalid credentials. Please try again.")
+                            st.error("Incorrect Password")
                 except Exception as e:
-                    st.error(f"Authentication System Error: {e}")
+                    st.error(f"Login Error: {e}")
             
-            st.markdown("<div style='margin: 25px 0;'><hr style='border: 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin: 15px 0;'><hr style='border: 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
             
-            # Secondary Actions
+            # Secondary buttons made smaller by using 'secondary' type and adding icons
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("Forgot Password?", type="secondary", use_container_width=True):
+                if st.button("Forgot Auth?", type="secondary", icon="❓", use_container_width=True):
                     st.session_state['page'] = 'forgot_pass'
                     st.rerun()
             with c2:
-                if st.button("Enroll New User", type="secondary", use_container_width=True):
+                if st.button("Enroll User", type="secondary", icon="📝", use_container_width=True):
                     st.session_state['page'] = 'register'
                     st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.8rem; margin-top: 2rem;'>Secured by HIPAA-compliant encryption standards</p>", unsafe_allow_html=True)
+
+        st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.7rem; margin-top: 10px;'>System Version: 2.1.0-Clinical</p>", unsafe_allow_html=True)
+
+
+
 def register_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
