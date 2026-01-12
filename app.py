@@ -124,147 +124,98 @@ if 'reset_email' not in st.session_state: st.session_state['reset_email'] = None
 
 
 def login_page():
-
-    st.set_page_config(
-        page_title="CardioRisk Pro",
-        page_icon="❤️",
-        layout="centered"
-    )
-
+    # CSS to modernize the UI and buttons
     st.markdown("""
-    <style>
-    /* --------- App Background --------- */
-    .stApp {
-        background: linear-gradient(135deg, #E0F2FE, #F8FAFC);
-        height: 100vh;
-        overflow: hidden;
-    }
+        <style>
+        /* Modernize button feel */
+        div.stButton > button {
+            height: 2.5rem;
+            font-size: 0.9rem;
+            border-radius: 8px;
+        }
+        
+        /* Clinical Header Styling */
+        .clinical-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 0px;
+        }
+        
+        .ekg-wave {
+            color: #EF4444;
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
 
-    /* --------- Center Card --------- */
-    .login-card {
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(12px);
-        border-radius: 22px;
-        padding: 32px 30px;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-        max-width: 420px;
-        margin: auto;
-        margin-top: 70px;
-    }
-
-    /* --------- Header --------- */
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 4px;
-    }
-
-    .app-title {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #1E293B;
-        margin: 0;
-    }
-
-    .subtext {
-        text-align: center;
-        color: #64748B;
-        font-size: 0.85rem;
-        margin-bottom: 25px;
-    }
-
-    .ekg {
-        color: #EF4444;
-        font-weight: bold;
-        font-size: 1.2rem;
-        animation: pulse 1.4s infinite;
-    }
-
-    @keyframes pulse {
-        0% {opacity: .4;}
-        50% {opacity: 1;}
-        100% {opacity: .4;}
-    }
-
-    /* --------- Inputs --------- */
-    input {
-        border-radius: 10px !important;
-    }
-
-    /* --------- Buttons --------- */
-    div.stButton > button {
-        height: 2.9rem;
-        border-radius: 12px;
-        font-weight: 600;
-    }
-
-    /* --------- Divider --------- */
-    .divider {
-        margin: 20px 0;
-        border-top: 1px solid #E2E8F0;
-    }
-
-    /* --------- Footer --------- */
-    .version {
-        text-align: center;
-        font-size: 0.7rem;
-        color: #94A3B8;
-        margin-top: 18px;
-    }
-    </style>
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        </style>
     """, unsafe_allow_html=True)
 
-    # ---------- CARD START ----------
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # --- PROFESSIONAL CLINICAL TITLE ---
+        # Using HTML for the heart, waves, and stethoscope feel
+        st.markdown("""
+            <div class="clinical-header">
+                <span style="font-size: 2.5rem;">❤️</span>
+                <span class="ekg-wave">ﮩ٨ـﮩﮩ٨ـ</span>
+                <h1 style='margin:0; color: #1E293B; font-size: 2.2rem;'>CardioRisk Pro</h1>
+                <span style="font-size: 2.2rem;">🩺</span>
+            </div>
+            <p style='text-align: center; color: #64748B; font-size: 0.9rem; margin-top: -5px;'>
+                Precision Clinical Decision Support | 🎛️ BP Active
+            </p>
+        """, unsafe_allow_html=True)
+        
+        with st.container(border=True):
+            st.subheader("Secure Sign In")
+            
+            email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
+            password = st.text_input("Access Key", type="password")
+            
+            st.write("") # Small spacer
+            
+            # Primary Authentication Button
+            if st.button("Authenticate Dashboard", type="primary", icon="🔐", use_container_width=True):
+                sheet = get_database()
+                try:
+                    cell = sheet.find(email)
+                    if cell is None:
+                        st.error("User not found.")
+                    else:
+                        stored_hash = sheet.cell(cell.row, 2).value
+                        if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+                            st.session_state['page'] = 'dashboard'
+                            st.session_state['user'] = email
+                            st.rerun()
+                        else:
+                            st.error("Incorrect Password")
+                except Exception as e:
+                    st.error(f"Login Error: {e}")
+            
+            st.markdown("<div style='margin: 15px 0;'><hr style='border: 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
+            
+            # Smaller secondary buttons with icons
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("Forgot?", type="secondary", icon="❓", use_container_width=True):
+                    st.session_state['page'] = 'forgot_pass'
+                    st.rerun()
+            with c2:
+                if st.button("Enroll", type="secondary", icon="📝", use_container_width=True):
+                    st.session_state['page'] = 'register'
+                    st.rerun()
 
-    # Header
-    st.markdown("""
-        <div class="header">
-            <span style="font-size:1.8rem;">❤️</span>
-            <span class="ekg">────</span>
-            <h1 class="app-title">CardioRisk Pro</h1>
-            <span style="font-size:1.7rem;">🩺</span>
-        </div>
-        <div class="subtext">
-            Precision Clinical Decision Support &nbsp;|&nbsp; ⚡ BP Active
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Inputs
-    email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
-    password = st.text_input("Access Key", type="password", placeholder="••••••••")
-
-    st.write("")
-
-    # Main Button
-    st.button(
-        "🔐 Authenticate Dashboard",
-        type="primary",
-        use_container_width=True
-    )
-
-    # Divider
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-
-    # Secondary buttons
-    c1, c2 = st.columns(2)
-    with c1:
-        st.button("❓ Forgot Auth", use_container_width=True)
-    with c2:
-        st.button("📝 Enroll User", use_container_width=True)
-
-    # Footer
-    st.markdown(
-        '<div class="version">System Version: 2.1.0-Clinical</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    # ---------- CARD END ----------
-
+        st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.7rem; margin-top: 10px;'>System Version: 2.1.0-Clinical</p>", unsafe_allow_html=True)
 
 
 
