@@ -31,6 +31,13 @@ st.markdown("""
         background-color: #F8F9FC;
         color: #1E293B;
     }
+    /* LIMIT STREAMLIT MAIN CONTAINER WIDTH */
+section.main > div {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
     
     /* Card Styling */
     .st-emotion-cache-1r6slb0, div[data-testid="stVerticalBlock"] > div[style*="background-color"] {
@@ -133,6 +140,7 @@ def login_page():
         height: 100vh;
         overflow: hidden;
     }
+    
 
     /* ===== LOGIN CARD (CHANGE WIDTH HERE) ===== */
     .login-card {
