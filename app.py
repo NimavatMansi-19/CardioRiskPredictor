@@ -627,8 +627,3 @@ if st.session_state['page'] == 'login': login_page()
 elif st.session_state['page'] == 'register': register_page()
 elif st.session_state['page'] == 'forgot_pass': forgot_password_page()
 elif st.session_state['page'] == 'dashboard': dashboard_page()
-# --- 8. CONTROLLER ---
-if st.session_state['page'] == 'login': login_page()
-elif st.session_state['page'] == 'register': register_page()
-elif st.session_state['page'] == 'forgot_pass': forgot_password_page()
-elif st.session_state['page'] == 'dashboard': dashboard_page()
