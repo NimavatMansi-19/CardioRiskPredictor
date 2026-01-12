@@ -122,18 +122,35 @@ if 'reset_email' not in st.session_state: st.session_state['reset_email'] = None
 
 # --- 4. AUTHENTICATION UI ---
 def login_page():
-    # Subtle CSS to refine card borders and button heights
+    # CSS to modernize the UI and buttons
     st.markdown("""
         <style>
-        /* Modernize button feel without increasing width */
+        /* Modernize button feel */
         div.stButton > button {
-            height: 2.4rem;
+            height: 2.5rem;
             font-size: 0.9rem;
-            border-radius: 6px;
+            border-radius: 8px;
         }
-        /* Soften the input box borders */
-        .stTextInput > div > div > input {
-            border-radius: 6px;
+        
+        /* Clinical Header Styling */
+        .clinical-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 0px;
+        }
+        
+        .ekg-wave {
+            color: #EF4444;
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -142,20 +159,30 @@ def login_page():
     
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        # Adding a clinical heartbeat icon to the header
-        st.markdown("<h1 style='text-align: center; color: #1E293B;'>🫀 CardioRisk Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748B; font-size: 0.9rem;'>AI-Powered Clinical Decision Support</p>", unsafe_allow_html=True)
+        
+        # --- PROFESSIONAL CLINICAL TITLE ---
+        # Using HTML for the heart, waves, and stethoscope feel
+        st.markdown("""
+            <div class="clinical-header">
+                <span style="font-size: 2.5rem;">❤️</span>
+                <span class="ekg-wave">ﮩ٨ـﮩﮩ٨ـ</span>
+                <h1 style='margin:0; color: #1E293B; font-size: 2.2rem;'>CardioRisk Pro</h1>
+                <span style="font-size: 2.2rem;">🩺</span>
+            </div>
+            <p style='text-align: center; color: #64748B; font-size: 0.9rem; margin-top: -5px;'>
+                Precision Clinical Decision Support | 🎛️ BP Active
+            </p>
+        """, unsafe_allow_html=True)
         
         with st.container(border=True):
             st.subheader("Secure Sign In")
             
-            # Icons added using the 'icon' parameter available in newer Streamlit versions
             email = st.text_input("Institutional Email", placeholder="doctor@hospital.com")
             password = st.text_input("Access Key", type="password")
             
             st.write("") # Small spacer
             
-            # Log in button with a key/lock icon
+            # Primary Authentication Button
             if st.button("Authenticate Dashboard", type="primary", icon="🔐", use_container_width=True):
                 sheet = get_database()
                 try:
@@ -175,19 +202,18 @@ def login_page():
             
             st.markdown("<div style='margin: 15px 0;'><hr style='border: 0; border-top: 1px solid #E2E8F0;'></div>", unsafe_allow_html=True)
             
-            # Secondary buttons made smaller by using 'secondary' type and adding icons
+            # Smaller secondary buttons with icons
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("Forgot Auth?", type="secondary", icon="❓", use_container_width=True):
+                if st.button("Forgot?", type="secondary", icon="❓", use_container_width=True):
                     st.session_state['page'] = 'forgot_pass'
                     st.rerun()
             with c2:
-                if st.button("Enroll User", type="secondary", icon="📝", use_container_width=True):
+                if st.button("Enroll", type="secondary", icon="📝", use_container_width=True):
                     st.session_state['page'] = 'register'
                     st.rerun()
 
         st.markdown("<p style='text-align: center; color: #94A3B8; font-size: 0.7rem; margin-top: 10px;'>System Version: 2.1.0-Clinical</p>", unsafe_allow_html=True)
-
 
 
 def register_page():
